@@ -1,113 +1,56 @@
-const asyncHandler = require('express-async-handler');
-const getTasks = asyncHandler (async (areq, res) => {
-    res.status(200).json({
-        tasks: [
-        {
-            id: 1,
-            title: "Task 1",
-            description: "Description 1",
-            status: "open"
-        },
-        {
-            id: 2,
-            title: "Task 2",
-            description: "Description 2",
-            status: "open"
-        },
-        {
-            id: 3,
-            title: "Task 3",
-            description: "Description 3",
-            status: "open"
-        }
-        ]
-    });
-})
+const asyncHandler = require("express-async-handler");
+const crypto = require("crypto");
 
-const addTask = asyncHandler (async (areq, res) => {
+const Tasks = require("../models/tasksModel");
 
-    if(!req.body.text){
-        res.status(400);
-        throw new Error("Bad Request");
+const getTasks = asyncHandler(async (areq, res) => {
+  const tasks = await Tasks.find();
+  res.status(200).json(tasks);
+});
 
+const addTask = asyncHandler(async (req, res) => {
+  if (!req.body.title) {
+    res.status(400);
+    throw new Error(req);
+  }
+
+  const id = crypto.randomBytes(16).toString("hex");
+  const task = await Tasks.create({
+    id,
+    title: req.body.title,
+    status: req.body.status,
+    type: req.body.type,
+    description: req.body.description,
+    parent: req.body.parent,
+  });
+  res.status(200).json(task);
+});
+
+const updateTask = asyncHandler(async (req, res) => {
+  
+
+    const task = await Tasks.findById(req.params.id);
+    if (!task) {
+        res.status(404);
+        throw new Error("No task found");
     }
-    res.status(200).json({
-        tasks: [
-        {
-            id: 1,
-            title: "Task 1",
-            description: "Description 1",
-            status: "open"
-        },
-        {
-            id: 2,
-            title: "Task 2",
-            description: "Description 2",
-            status: "open"
-        },
-        {
-            id: 3,
-            title: "Task 3",
-            description: "Description 3",
-            status: "open"
-        }
-        ]
-    });
-})
+    const updateTask = await Tasks.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.status(200).json(updateTask);
+});
 
-const updateTask = asyncHandler ( async (areq, res) => {
-    res.status(200).json({
-        tasks: [
-        {
-            id: req.params.id,
-            title: "Task 1",
-            description: "Description 1",
-            status: "open"
-        },
-        {
-            id: 2,
-            title: "Task 2",
-            description: "Description 2",
-            status: "open"
-        },
-        {
-            id: 3,
-            title: "Task 3",
-            description: "Description 3",
-            status: "open"
-        }
-        ]
-    });
-})
-
-const deleteTask = asyncHandler (async (areq, res) => {
-    res.status(200).json({
-        tasks: [
-        {
-            id: req.params.id,
-            title: "Task 1",
-            description: "Description 1",
-            status: "open"
-        },
-        {
-            id: 2,
-            title: "Task 2",
-            description: "Description 2",
-            status: "open"
-        },
-        {
-            id: 3,
-            title: "Task 3",
-            description: "Description 3",
-            status: "open"
-        }
-        ]
-    });
-})
+const deleteTask = asyncHandler(async (req, res) => {
+  const task = await Tasks.findById(req.params.id);
+    if (!task) {
+        res.status(404);
+        throw new Error("No task found");
+    }
+    task.remove();
+    res.status(200).json({ id: req.params.id });
+});
 
 module.exports = {
-    getTasks,
-    addTask,
-    updateTask,
-    deleteTask
-}
+  getTasks,
+  addTask,
+  updateTask,
+  deleteTask,
+};
